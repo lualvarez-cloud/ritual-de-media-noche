@@ -21,19 +21,12 @@ body{
     justify-content:center;
     align-items:center;
     background:radial-gradient(circle, #200000, black);
-    animation: pulse 3s infinite;
-}
-
-@keyframes pulse{
-    0%{background-color:#100000;}
-    50%{background-color:#300000;}
-    100%{background-color:#100000;}
 }
 
 h1{
     font-size:60px;
-    text-align:center;
     letter-spacing:5px;
+    text-align:center;
 }
 
 button{
@@ -89,7 +82,7 @@ canvas{
 
 <div id="startScreen">
     <h1>RITUAL DE MEDIA NOCHE</h1>
-    <button onclick="startIntro()">🩸 INICIAR RITUAL</button>
+    <button onclick="startGame()">🩸 INICIAR RITUAL</button>
 </div>
 
 <div id="hud">
@@ -106,7 +99,8 @@ canvas{
     “Este ritual es solo para ti ❤️”
 </div>
 
-<audio id="intro" src="intro.mp3.mp3"></audio>
+<!-- AUDIO CON DOBLE .mp3 -->
+<audio id="intro" src="intro.mp3.mp3" loop></audio>
 <audio id="music"></audio>
 
 <script>
@@ -121,21 +115,31 @@ let level = 1;
 let speed = 2;
 let playing = false;
 
-function startIntro(){
+window.onload = function(){
+    document.getElementById("intro").play().catch(()=>{});
+};
+
+function startGame(){
+    let intro = document.getElementById("intro");
+    intro.pause();
+    intro.currentTime = 0;
+
     document.getElementById("startScreen").style.display="none";
-    document.getElementById("intro").play();
-    setTimeout(startLevel, 3000);
+    startLevel();
 }
 
 function startLevel(){
     document.getElementById("hud").style.display="block";
     canvas.style.display="block";
-    document.getElementById("music").src="nivel"+level+".mp3";
-    document.getElementById("music").play();
-    playing=true;
+
+    document.getElementById("music").src="nivel"+level+".mp3.mp3";
+    document.getElementById("music").play().catch(()=>{});
+
     if(level==1) speed=2;
     if(level==2) speed=3;
     if(level==3) speed=4;
+
+    playing=true;
     gameLoop();
 }
 
@@ -150,6 +154,7 @@ function drawNotes(){
         ctx.fillStyle="red";
         ctx.fillRect(notes[i].x,notes[i].y,20,20);
         notes[i].y+=speed;
+
         if(notes[i].y>600){
             notes.splice(i,1);
             energy-=10;
@@ -160,8 +165,11 @@ function drawNotes(){
 
 function gameLoop(){
     if(!playing) return;
+
     if(Math.random()<0.03) createNote();
+
     drawNotes();
+
     document.getElementById("score").innerText=score;
     document.getElementById("combo").innerText=combo;
     document.getElementById("energy").style.width=energy+"%";
@@ -182,7 +190,7 @@ document.addEventListener("keydown",function(e){
                 notes.splice(i,1);
                 score+=10;
                 combo++;
-                energy+=2;
+                energy=Math.min(100, energy+2);
                 break;
             }
         }
