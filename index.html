@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Congregación de Medianoche</title>
+
+<style>
+body{
+    margin:0;
+    background:#0d001a;
+    color:white;
+    font-family:Arial, sans-serif;
+    overflow:hidden;
+}
+
+.game-area{
+    position:absolute;
+    right:50px;
+    top:50px;
+    width:400px;
+    height:600px;
+    background:black;
+    display:flex;
+}
+
+.track{
+    flex:1;
+    border-right:1px solid #333;
+    position:relative;
+    overflow:hidden;
+}
+
+.hit-zone{
+    position:absolute;
+    bottom:80px;
+    left:0;
+    right:0;
+    height:60px;
+    border:2px solid #8A2BE2;
+}
+
+.note{
+    position:absolute;
+    width:80%;
+    left:10%;
+    height:40px;
+    background:#8A2BE2;
+    border-radius:20px;
+    top:-40px;
+}
+
+.key-indicator{
+    position:absolute;
+    bottom:10px;
+    left:50%;
+    transform:translateX(-50%);
+    border:2px solid #8A2BE2;
+    padding:5px 10px;
+}
+
+.ui{
+    position:absolute;
+    top:20px;
+    left:20px;
+}
+
+.energy-bar{
+    width:300px;
+    height:20px;
+    border:2px solid #8A2BE2;
+    margin-top:10px;
+}
+
+.energy-fill{
+    height:100%;
+    width:100%;
+    background:#8A2BE2;
+}
+
+.start-screen, .game-over{
+    position:absolute;
+    inset:0;
+    background:black;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+
+.game-over{
+    display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="ui">
+    <div>Puntuación: <span id="score">0</span></div>
+    <div>Combo: <span id="combo">0</span></div>
+    <div class="energy-bar">
+        <div class="energy-fill" id="energy-fill"></div>
+    </div>
+</div>
+
+<div class="game-area">
+    <div class="track" data-key="d"><div class="hit-zone"></div><div class="key-indicator">D</div></div>
+    <div class="track" data-key="f"><div class="hit-zone"></div><div class="key-indicator">F</div></div>
+    <div class="track" data-key="j"><div class="hit-zone"></div><div class="key-indicator">J</div></div>
+    <div class="track" data-key="k"><div class="hit-zone"></div><div class="key-indicator">K</div></div>
+</div>
+
+<div class="start-screen" id="startScreen">
+    <h1>Congregación de Medianoche</h1>
+    <button onclick="iniciarJuego()">Comenzar</button>
+</div>
+
+<div class="game-over" id="gameOver">
+    <h1>Fin del Ritual</h1>
+    <div>Puntuación Final: <span id="finalScore"></span></div>
+    <button onclick="reiniciarJuego()">Reiniciar</button>
+</div>
+
+<script>
+let juego;
+
+class JuegoRitmo{
+    constructor(){
+        this.puntuacion=0;
+        this.combo=0;
+        this.comboMaximo=0;
+        this.energia=100;
+        this.estaJugando=false;
+        this.notas=[];
+        this.pistas=document.querySelectorAll(".track");
+        this.mapeoTeclas={d:0,f:1,j:2,k:3};
+        this.indicePatron=0;
+        this.tiempoInicioJuego=0;
+
+        this.patronCancion=[
+            {tiempo:0,pista:1},
+            {tiempo:500,pista:2},
+            {tiempo:1000,pista:0},
+            {tiempo:1500,pista:3},
+            {tiempo:2000,pista:1},
+            {tiempo:2500,pista:2},
+        ];
+
+        document.addEventListener("keydown",(e)=>this.presionar(e));
+    }
+
+    iniciar(){
+        document.getElementById("startScreen").style.display="none";
+        document.getElementById("gameOver").style.display="none";
+
+        this.puntuacion=0;
+        this.combo=0;
+        this.energia=100;
+        this.indicePatron=0;
+        this.notas=[];
+        this.estaJugando=true;
+        this.tiempoInicioJuego=Date.now();
+
+        this.loop=setInterval(()=>this.actualizar(),16);
+    }
+
+    actualizar(){
+        if(!this.estaJugando)return;
+
+        let tiempoActual=Date.now()-this.tiempoInicioJuego;
+
+        if(
+            this.indicePatron<this.patronCancion.length &&
+            tiempoActual>=this.patronCancion[this.indicePatron].tiempo
+        ){
+            this.crearNota(this.patronCancion[this.indicePatron].pista);
+            this.indicePatron++;
+        }
+
+        // repetir patrón
+        if(this.indicePatron>=this.patronCancion.length){
+            this.indicePatron=0;
+            this.tiempoInicioJuego=Date.now();
+        }
+
+        // duración 30 segundos
+        if(tiempoActual>30000 || this.energia<=0){
+            this.terminar();
+        }
+    }
+
+    crearNota(pistaIndex){
+        let pista=this.pistas[pistaIndex];
+        let nota=document.createElement("div");
+        nota.classList.add("note");
+        pista.appendChild(nota);
+
+        let velocidad=3;
+
+        let mover=setInterval(()=>{
+            let top=parseInt(nota.style.top||"-40");
+            top+=velocidad;
+            nota.style.top=top+"px";
+
+            if(top>600){
+                clearInterval(mover);
+                nota.remove();
+                this.combo=0;
+                this.energia-=10;
+                this.actualizarUI();
+            }
+        },16);
+
+        this.notas.push({elemento:nota,pista:pistaIndex});
+    }
+
+    presionar(e){
+        let tecla=e.key.toLowerCase();
+        if(!(tecla in this.mapeoTeclas))return;
+
+        let pistaIndex=this.mapeoTeclas[tecla];
+
+        for(let i=0;i<this.notas.length;i++){
+            let nota=this.notas[i];
+            if(nota.pista===pistaIndex){
+                nota.elemento.remove();
+                this.notas.splice(i,1);
+                this.combo++;
+                this.puntuacion+=100;
+                this.energia=Math.min(100,this.energia+5);
+                this.actualizarUI();
+                return;
+            }
+        }
+
+        this.combo=0;
+        this.energia-=5;
+        this.actualizarUI();
+    }
+
+    actualizarUI(){
+        document.getElementById("score").textContent=this.puntuacion;
+        document.getElementById("combo").textContent=this.combo;
+        document.getElementById("energy-fill").style.width=this.energia+"%";
+    }
+
+    terminar(){
+        this.estaJugando=false;
+        clearInterval(this.loop);
+        document.getElementById("finalScore").textContent=this.puntuacion;
+        document.getElementById("gameOver").style.display="flex";
+    }
+}
+
+function iniciarJuego(){
+    juego=new JuegoRitmo();
+    juego.iniciar();
+}
+
+function reiniciarJuego(){
+    juego=new JuegoRitmo();
+    juego.iniciar();
+}
+</script>
+
+</body>
+</html>
