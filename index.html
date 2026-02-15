@@ -50,7 +50,7 @@ canvas{
 
 <div id="startScreen">
     <h1>RITUAL DE MEDIA NOCHE</h1>
-    <button onclick="startGame()">INICIAR</button>
+    <button id="startBtn">INICIAR</button>
 </div>
 
 <div id="hud">
@@ -59,48 +59,27 @@ canvas{
 
 <canvas id="game" width="400" height="600"></canvas>
 
-<audio id="intro" src="intro.mp3"></audio>
-<audio id="music"></audio>
-
 <script>
-let canvas = document.getElementById("game");
-let ctx = canvas.getContext("2d");
-
-let score = 0;
-let level = 1;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const startBtn = document.getElementById("startBtn");
 
 let animationId = null;
 let playing = false;
+let score = 0;
 
 let player = { x:180, y:500, width:40, height:40 };
 let notes = [];
 let spawnTimer = 0;
 
-// 🔥 INICIAR JUEGO
+// 🔥 BOTÓN SEGURO
+startBtn.addEventListener("click", startGame);
+
 function startGame(){
-
-    let intro = document.getElementById("intro");
-    intro.currentTime = 0;
-    intro.play();
-
-    setTimeout(()=>{
-        intro.pause();
-        intro.currentTime = 0;
-        startLevel();
-    },2000);
-}
-
-// 🔥 INICIAR NIVEL
-function startLevel(){
 
     document.getElementById("startScreen").style.display="none";
     document.getElementById("hud").style.display="block";
     canvas.style.display="block";
-
-    let music = document.getElementById("music");
-    music.src = "nivel" + level + ".mp3";
-    music.currentTime = 0;
-    music.play();
 
     playing = true;
 
@@ -108,7 +87,6 @@ function startLevel(){
     gameLoop();
 }
 
-// 🔥 LOOP OPTIMIZADO
 function gameLoop(){
 
     if(!playing) return;
@@ -119,9 +97,9 @@ function gameLoop(){
     ctx.fillStyle="red";
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
-    // generar notas cada cierto tiempo
+    // generar notas
     spawnTimer++;
-    if(spawnTimer > 40){
+    if(spawnTimer > 20){
         notes.push({
             x: Math.random()*360,
             y: -20,
@@ -134,17 +112,18 @@ function gameLoop(){
     // mover notas
     for(let i = notes.length-1; i>=0; i--){
         let n = notes[i];
-        n.y += 4;
+        n.y += 5;
 
         ctx.fillStyle="white";
         ctx.fillRect(n.x, n.y, n.width, n.height);
 
-        // eliminar si sale pantalla
+        // eliminar si sale
         if(n.y > 600){
             notes.splice(i,1);
+            continue;
         }
 
-        // colisión simple
+        // colisión
         if(n.x < player.x + player.width &&
            n.x + n.width > player.x &&
            n.y < player.y + player.height &&
@@ -161,6 +140,7 @@ function gameLoop(){
 
 // mover jugador
 document.addEventListener("keydown", function(e){
+
     if(e.key === "ArrowLeft") player.x -= 20;
     if(e.key === "ArrowRight") player.x += 20;
 
