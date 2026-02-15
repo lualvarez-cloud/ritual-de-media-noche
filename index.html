@@ -100,8 +100,9 @@ canvas{
     “Este ritual es solo para ti ❤️”
 </div>
 
-<audio id="intro" src="intro.mp3.mp3" loop></audio>
-<audio id="music"></audio>
+<!-- AUDIOS CORREGIDOS -->
+<audio id="intro" src="intro.mp3" preload="auto"></audio>
+<audio id="music" preload="auto"></audio>
 
 <script>
 let canvas = document.getElementById("game");
@@ -118,26 +119,25 @@ let playing = false;
 let intro = document.getElementById("intro");
 let music = document.getElementById("music");
 
-/* AHORA EL INTRO SUENA AL PRESIONAR EL BOTÓN */
 function startGame(){
 
-    intro.play(); // empieza intro
+    intro.play().catch(()=>{});
 
     setTimeout(()=>{
-        intro.pause(); // se detiene
+        intro.pause();
         intro.currentTime = 0;
 
         document.getElementById("startScreen").style.display="none";
         startLevel();
-    },2000); // dura 2 segundos antes de empezar el nivel
+    },2000);
 }
 
 function startLevel(){
     document.getElementById("hud").style.display="block";
     canvas.style.display="block";
 
-    music.src="nivel"+level+".mp3.mp3";
-    music.play();
+    music.src="nivel"+level+".mp3";
+    music.play().catch(()=>{});
 
     if(level==1) speed=2;
     if(level==2) speed=3;
