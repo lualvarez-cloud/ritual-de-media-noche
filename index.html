@@ -13,7 +13,6 @@ body{
     overflow:hidden;
 }
 
-/* PANTALLA INICIO */
 #startScreen{
     position:absolute;
     width:100%;
@@ -29,7 +28,6 @@ h1{
     font-size:60px;
     letter-spacing:5px;
     text-align:center;
-    transition:0.2s;
 }
 
 button{
@@ -41,31 +39,6 @@ button{
     cursor:pointer;
 }
 
-/* GLITCH */
-.glitch{
-    animation: glitchAnim 0.1s infinite;
-}
-
-@keyframes glitchAnim{
-    0% { transform: translate(0); }
-    25% { transform: translate(-5px, 5px); }
-    50% { transform: translate(5px, -5px); }
-    75% { transform: translate(-5px, -5px); }
-    100% { transform: translate(0); }
-}
-
-/* FLASH ROJO */
-#flash{
-    position:absolute;
-    width:100%;
-    height:100%;
-    background:red;
-    opacity:0;
-    pointer-events:none;
-    transition:0.2s;
-}
-
-/* CANVAS */
 canvas{
     display:none;
     background:black;
@@ -113,8 +86,6 @@ canvas{
     <button onclick="startGame()">🩸 INICIAR RITUAL</button>
 </div>
 
-<div id="flash"></div>
-
 <div id="hud">
     Puntaje: <span id="score">0</span><br>
     Combo: <span id="combo">0</span>
@@ -129,7 +100,6 @@ canvas{
     “Este ritual es solo para ti ❤️”
 </div>
 
-<!-- AUDIOS -->
 <audio id="intro" src="intro.mp3.mp3" loop></audio>
 <audio id="music"></audio>
 
@@ -148,34 +118,18 @@ let playing = false;
 let intro = document.getElementById("intro");
 let music = document.getElementById("music");
 
-/* ACTIVAR INTRO AL PRIMER CLICK */
-document.body.addEventListener("click", function activarIntro(){
-    intro.play();
-    document.body.removeEventListener("click", activarIntro);
-});
-
-/* INICIAR JUEGO CON GLITCH */
+/* AHORA EL INTRO SUENA AL PRESIONAR EL BOTÓN */
 function startGame(){
 
-    let flash = document.getElementById("flash");
-    let title = document.querySelector("h1");
-
-    title.classList.add("glitch");
-    flash.style.opacity="0.8";
+    intro.play(); // empieza intro
 
     setTimeout(()=>{
-        flash.style.opacity="0";
-    },150);
-
-    setTimeout(()=>{
-        title.classList.remove("glitch");
-
-        intro.pause();
+        intro.pause(); // se detiene
         intro.currentTime = 0;
 
         document.getElementById("startScreen").style.display="none";
         startLevel();
-    },600);
+    },2000); // dura 2 segundos antes de empezar el nivel
 }
 
 function startLevel(){
@@ -262,4 +216,5 @@ music.addEventListener("ended",function(){
 
 </body>
 </html>
+
 
