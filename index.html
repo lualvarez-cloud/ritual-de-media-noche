@@ -1,64 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Ritual de Media Noche</title>
-
-<style>
-body{
-    margin:0;
-    background:black;
-    color:white;
-    font-family:Arial, sans-serif;
-    overflow:hidden;
-}
-
-#startScreen{
-    position:absolute;
-    width:100%;
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    background:radial-gradient(circle, #200000, black);
-}
-
-button{
-    padding:15px 40px;
-    font-size:20px;
-    background:#700000;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-
-canvas{
-    display:none;
-    background:black;
-}
-
-#hud{
-    position:absolute;
-    top:10px;
-    left:10px;
-    display:none;
-}
-</style>
-</head>
-<body>
-
-<div id="startScreen">
-    <h1>RITUAL DE MEDIA NOCHE</h1>
-    <button id="startBtn">INICIAR</button>
-</div>
-
-<div id="hud">
-    Puntaje: <span id="score">0</span>
-</div>
-
-<canvas id="game" width="400" height="600"></canvas>
-
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -67,19 +6,39 @@ const startBtn = document.getElementById("startBtn");
 let animationId = null;
 let playing = false;
 let score = 0;
+let life = 100;
+let speed = 4;
 
 let player = { x:180, y:500, width:40, height:40 };
 let notes = [];
+let particles = [];
+let stars = [];
 let spawnTimer = 0;
 
-// 🔥 BOTÓN SEGURO
+// ⭐ fondo estrellas
+for(let i=0;i<80;i++){
+    stars.push({
+        x: Math.random()*400,
+        y: Math.random()*600,
+        size: Math.random()*2,
+        speed: Math.random()*0.5+0.2
+    });
+}
+
 startBtn.addEventListener("click", startGame);
 
 function startGame(){
-
     document.getElementById("startScreen").style.display="none";
     document.getElementById("hud").style.display="block";
     canvas.style.display="block";
+
+    score = 0;
+    life = 100;
+    speed = 4;
+    notes = [];
+    particles = [];
+
+    document.getElementById("score").innerText = score;
 
     playing = true;
 
@@ -88,18 +47,52 @@ function startGame(){
 }
 
 function gameLoop(){
-
     if(!playing) return;
 
     ctx.clearRect(0,0,400,600);
 
-    // jugador
+    drawBackground();
+    drawLifeBar();
+    drawPlayer();
+    spawnNotes();
+    updateNotes();
+    updateParticles();
+    checkGameOver();
+
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function drawBackground(){
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,400,600);
+
+    ctx.fillStyle="white";
+    for(let s of stars){
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+        s.y += s.speed;
+        if(s.y > 600){
+            s.y = 0;
+            s.x = Math.random()*400;
+        }
+    }
+}
+
+function drawLifeBar(){
+    ctx.fillStyle="red";
+    ctx.fillRect(10,40,life*2,10);
+
+    ctx.strokeStyle="white";
+    ctx.strokeRect(10,40,200,10);
+}
+
+function drawPlayer(){
     ctx.fillStyle="red";
     ctx.fillRect(player.x, player.y, player.width, player.height);
+}
 
-    // generar notas
+function spawnNotes(){
     spawnTimer++;
-    if(spawnTimer > 20){
+    if(spawnTimer > 25){
         notes.push({
             x: Math.random()*360,
             y: -20,
@@ -108,39 +101,76 @@ function gameLoop(){
         });
         spawnTimer = 0;
     }
+}
 
-    // mover notas
+function updateNotes(){
     for(let i = notes.length-1; i>=0; i--){
         let n = notes[i];
-        n.y += 5;
+        n.y += speed;
 
         ctx.fillStyle="white";
         ctx.fillRect(n.x, n.y, n.width, n.height);
 
-        // eliminar si sale
         if(n.y > 600){
+            life -= 10;
             notes.splice(i,1);
             continue;
         }
 
-        // colisión
         if(n.x < player.x + player.width &&
            n.x + n.width > player.x &&
            n.y < player.y + player.height &&
            n.y + n.height > player.y){
 
             score++;
+            speed += 0.2; // aumenta dificultad
             document.getElementById("score").innerText = score;
+
+            createParticles(n.x + 10, n.y + 10);
+
             notes.splice(i,1);
         }
     }
-
-    animationId = requestAnimationFrame(gameLoop);
 }
 
-// mover jugador
-document.addEventListener("keydown", function(e){
+function createParticles(x,y){
+    for(let i=0;i<8;i++){
+        particles.push({
+            x:x,
+            y:y,
+            dx:(Math.random()-0.5)*4,
+            dy:(Math.random()-0.5)*4,
+            life:25
+        });
+    }
+}
 
+function updateParticles(){
+    ctx.fillStyle="orange";
+    for(let i=particles.length-1;i>=0;i--){
+        let p = particles[i];
+        p.x += p.dx;
+        p.y += p.dy;
+        p.life--;
+
+        ctx.fillRect(p.x, p.y, 3, 3);
+
+        if(p.life <= 0){
+            particles.splice(i,1);
+        }
+    }
+}
+
+function checkGameOver(){
+    if(life <= 0){
+        playing = false;
+        ctx.fillStyle="white";
+        ctx.font="40px Arial";
+        ctx.fillText("GAME OVER",80,300);
+    }
+}
+
+document.addEventListener("keydown", function(e){
     if(e.key === "ArrowLeft") player.x -= 20;
     if(e.key === "ArrowRight") player.x += 20;
 
@@ -148,6 +178,3 @@ document.addEventListener("keydown", function(e){
     if(player.x > 360) player.x = 360;
 });
 </script>
-
-</body>
-</html>
