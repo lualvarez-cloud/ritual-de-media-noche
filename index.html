@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Ritual de Media Noche</title>
+
 <style>
 body{
     margin:0;
@@ -12,6 +13,7 @@ body{
     overflow:hidden;
 }
 
+/* PANTALLA INICIO */
 #startScreen{
     position:absolute;
     width:100%;
@@ -27,6 +29,7 @@ h1{
     font-size:60px;
     letter-spacing:5px;
     text-align:center;
+    transition:0.2s;
 }
 
 button{
@@ -38,6 +41,31 @@ button{
     cursor:pointer;
 }
 
+/* GLITCH */
+.glitch{
+    animation: glitchAnim 0.1s infinite;
+}
+
+@keyframes glitchAnim{
+    0% { transform: translate(0); }
+    25% { transform: translate(-5px, 5px); }
+    50% { transform: translate(5px, -5px); }
+    75% { transform: translate(-5px, -5px); }
+    100% { transform: translate(0); }
+}
+
+/* FLASH ROJO */
+#flash{
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:red;
+    opacity:0;
+    pointer-events:none;
+    transition:0.2s;
+}
+
+/* CANVAS */
 canvas{
     display:none;
     background:black;
@@ -85,6 +113,8 @@ canvas{
     <button onclick="startGame()">🩸 INICIAR RITUAL</button>
 </div>
 
+<div id="flash"></div>
+
 <div id="hud">
     Puntaje: <span id="score">0</span><br>
     Combo: <span id="combo">0</span>
@@ -99,7 +129,7 @@ canvas{
     “Este ritual es solo para ti ❤️”
 </div>
 
-<!-- AUDIO CON DOBLE .mp3 -->
+<!-- AUDIOS -->
 <audio id="intro" src="intro.mp3.mp3" loop></audio>
 <audio id="music"></audio>
 
@@ -115,25 +145,45 @@ let level = 1;
 let speed = 2;
 let playing = false;
 
-window.onload = function(){
-    document.getElementById("intro").play().catch(()=>{});
-};
+let intro = document.getElementById("intro");
+let music = document.getElementById("music");
 
+/* ACTIVAR INTRO AL PRIMER CLICK */
+document.body.addEventListener("click", function activarIntro(){
+    intro.play();
+    document.body.removeEventListener("click", activarIntro);
+});
+
+/* INICIAR JUEGO CON GLITCH */
 function startGame(){
-    let intro = document.getElementById("intro");
-    intro.pause();
-    intro.currentTime = 0;
 
-    document.getElementById("startScreen").style.display="none";
-    startLevel();
+    let flash = document.getElementById("flash");
+    let title = document.querySelector("h1");
+
+    title.classList.add("glitch");
+    flash.style.opacity="0.8";
+
+    setTimeout(()=>{
+        flash.style.opacity="0";
+    },150);
+
+    setTimeout(()=>{
+        title.classList.remove("glitch");
+
+        intro.pause();
+        intro.currentTime = 0;
+
+        document.getElementById("startScreen").style.display="none";
+        startLevel();
+    },600);
 }
 
 function startLevel(){
     document.getElementById("hud").style.display="block";
     canvas.style.display="block";
 
-    document.getElementById("music").src="nivel"+level+".mp3.mp3";
-    document.getElementById("music").play().catch(()=>{});
+    music.src="nivel"+level+".mp3.mp3";
+    music.play();
 
     if(level==1) speed=2;
     if(level==2) speed=3;
@@ -197,7 +247,7 @@ document.addEventListener("keydown",function(e){
     }
 });
 
-document.getElementById("music").addEventListener("ended",function(){
+music.addEventListener("ended",function(){
     level++;
     if(level<=3){
         startLevel();
