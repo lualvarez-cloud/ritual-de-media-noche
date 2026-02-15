@@ -83,7 +83,7 @@ canvas{
 
 <div id="startScreen">
     <h1>RITUAL DE MEDIA NOCHE</h1>
-    <button onclick="startGame()">🩸 INICIAR RITUAL</button>
+    <button id="startBtn">🩸 INICIAR RITUAL</button>
 </div>
 
 <div id="hud">
@@ -100,9 +100,9 @@ canvas{
     “Este ritual es solo para ti ❤️”
 </div>
 
-<!-- AUDIOS CORREGIDOS -->
-<audio id="intro" src="intro.mp3" preload="auto"></audio>
-<audio id="music" preload="auto"></audio>
+<!-- AUDIOS -->
+<audio id="intro" src="intro.mp3"></audio>
+<audio id="music"></audio>
 
 <script>
 let canvas = document.getElementById("game");
@@ -118,32 +118,42 @@ let playing = false;
 
 let intro = document.getElementById("intro");
 let music = document.getElementById("music");
+let startBtn = document.getElementById("startBtn");
+
+/* 🔥 AUDIO DESBLOQUEADO CORRECTAMENTE */
+startBtn.addEventListener("click", function(){
+
+    // Forzar interacción válida
+    intro.play().then(()=>{
+        intro.pause();
+        intro.currentTime = 0;
+        startGame();
+    }).catch(()=>{
+        startGame();
+    });
+
+});
 
 function startGame(){
 
-    intro.play().catch(()=>{});
-
-    setTimeout(()=>{
-        intro.pause();
-        intro.currentTime = 0;
-
-        document.getElementById("startScreen").style.display="none";
-        startLevel();
-    },2000);
+    document.getElementById("startScreen").style.display="none";
+    startLevel();
 }
 
 function startLevel(){
+
     document.getElementById("hud").style.display="block";
     canvas.style.display="block";
 
-    music.src="nivel"+level+".mp3";
-    music.play().catch(()=>{});
+    music.src = "nivel" + level + ".mp3";
+    music.currentTime = 0;
+    music.play();
 
     if(level==1) speed=2;
     if(level==2) speed=3;
     if(level==3) speed=4;
 
-    playing=true;
+    playing = true;
     gameLoop();
 }
 
@@ -216,5 +226,3 @@ music.addEventListener("ended",function(){
 
 </body>
 </html>
-
-
